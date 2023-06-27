@@ -6,8 +6,9 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import banned.android.wnacg.R
+import banned.android.wnacg.data.models.Manga
 
-class MangaAdapter(private var list: List<String>) :
+class MangaAdapter(private var list: List<Manga>) :
     RecyclerView.Adapter<MangaAdapter.MyViewHolder>()
 {
 
@@ -25,12 +26,13 @@ class MangaAdapter(private var list: List<String>) :
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int)
     {
-        holder.textViewMangaTitle.text = list[position]
+        holder.textViewMangaTitle.text = list[position].title
+        holder.textViewMangaImageNumb.text = list[position].imageNumbers.toString()
     }
 
     override fun getItemCount() = list.size
 
-    fun updateData(newList: List<String>)
+    fun updateData(newList: List<Manga>)
     {
         list = newList
         notifyDataSetChanged()

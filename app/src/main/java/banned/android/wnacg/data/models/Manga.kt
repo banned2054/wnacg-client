@@ -3,7 +3,9 @@ package banned.android.wnacg.data.models
 data class Manga
     (
     val title: String,
-    val imageThumbnail: String,
+    var thumbnailSrc: String,
+    var thumbnailLocalPath: String,
     val imageNumbers: Int,
-    val url: String
+    val mangaAid: Int,
+    val localImagePath: String
     )

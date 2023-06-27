@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
 }
 
 android {
@@ -51,7 +52,9 @@ dependencies {
     implementation 'io.github.scwang90:refresh-footer-ball:2.0.6'        //球脉冲加载
     implementation 'io.github.scwang90:refresh-footer-classics:2.0.6'
     implementation 'androidx.fragment:fragment:1.6.0'
-    implementation 'com.squareup.retrofit2:retrofit:2.9.0'//经典加载
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'androidx.room:room-runtime:2.5.1'
+    kapt "androidx.room:room-compiler:2.5.1"
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
