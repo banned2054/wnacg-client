@@ -6,13 +6,15 @@ import banned.android.wnacg.data.models.ImageEntity
 @Dao
 interface ImageDao
 {
-    @Query("SELECT * FROM images WHERE imgSrc = :img_src")
-    suspend fun findImageByAid(img_src: String): ImageEntity?
+    @Query("SELECT * FROM ImageEntity WHERE url = :url")
+    fun find(url: String): ImageEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertImage(imageEntity: ImageEntity)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insert(image: ImageEntity)
 
-    @Query("DELETE FROM images WHERE imgSrc = :img_src")
-    suspend fun deleteImage(img_src: String)
+    @Delete
+    fun delete(image: ImageEntity)
+
+    @Update
+    fun update(image: ImageEntity)
 }
-

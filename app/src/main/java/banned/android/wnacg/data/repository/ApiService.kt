@@ -35,8 +35,8 @@ interface ApiService
                      ): Call<ResponseBody>
 
     @GET
-    suspend fun downloadImage(
+    fun downloadImage(
         @Url
         imageUrl: String
-                             ): ResponseBody
+                     ): Call<ResponseBody>
 }

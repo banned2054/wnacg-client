@@ -4,10 +4,10 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 
-@Entity(tableName = "images")
+@Entity
 data class ImageEntity(
     @PrimaryKey
-    val imgSrc: String,
-    val imgPath: String,
-    val lastAccessTime: Long
+    val url: String,
+    val filePath: String,
+    val expiryTime: Long
                       )
