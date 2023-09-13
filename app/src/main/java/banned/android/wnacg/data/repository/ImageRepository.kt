@@ -53,7 +53,7 @@ class ImageRepository(
                                                         call: Call<ResponseBody>, t: Throwable
                                                                           )
                                                     {
-                                                        // 处理错误
+                                                        val a = 1
                                                     }
                                                 })
     }
@@ -62,29 +62,63 @@ class ImageRepository(
     {
         CoroutineScope(Dispatchers.IO).launch {
             val imageEntity = imageDao.find(url)
-            if (imageEntity != null)
-            {
-                if (imageEntity.expiryTime > System.currentTimeMillis())
-                {
-                    // 更新ImageView
-                    val bitmap = BitmapFactory.decodeFile(imageEntity.filePath)
-                    imageView.setImageBitmap(bitmap)
-                }
-                else
-                {
-                    // 更新图片的有效期
-                    val updatedImageEntity = imageEntity.copy(expiryTime = System.currentTimeMillis() + MAX_LIVE_TIME)
-                    imageDao.update(updatedImageEntity)
 
-                    // 更新ImageView
-                    val bitmap = BitmapFactory.decodeFile(updatedImageEntity.filePath)
-                    imageView.setImageBitmap(bitmap)
-                }
-            }
-            else
+            //数据库中没有图片
+            if (imageEntity == null)
             {
                 downloadAndCacheImage(url, imageView)
+                return@launch
             }
+
+            val file = File(imageEntity.filePath)
+
+            //数据库中有图片，但实际没有图片
+            if (!file.exists())
+            {
+                downloadAndCacheImage(url, imageView)
+                return@launch
+            }
+
+            //超时，重新下载图片
+            if (imageEntity.expiryTime <= System.currentTimeMillis())
+            {
+                imageDao.delete(imageEntity)
+                downloadAndCacheImage(url, imageView)
+                return@launch
+            }
+
+            // 更新图片的有效期
+            val updatedImageEntity = imageEntity.copy(expiryTime = System.currentTimeMillis() + MAX_LIVE_TIME)
+            imageDao.update(updatedImageEntity)
+            try
+            {
+                // 更新ImageView
+                val bitmap = BitmapFactory.decodeFile(imageEntity.filePath)
+
+                //如果成功读取图片，设置imageView
+                if (bitmap != null)
+                {
+                    imageView.setImageBitmap(bitmap)
+                }
+
+                //图片文件存在，但不完整
+                else
+                {
+                    file.delete()
+
+                    imageDao.delete(updatedImageEntity)
+                    downloadAndCacheImage(url, imageView)
+                    return@launch
+                }
+            }
+            catch (e: Exception)
+            {
+                file.delete()
+
+                imageDao.delete(updatedImageEntity)
+                downloadAndCacheImage(url, imageView)
+            }
+
         }
     }
 

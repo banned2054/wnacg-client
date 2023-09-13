@@ -6,7 +6,7 @@
 
     <RelativeLayout
         android:layout_width = "match_parent"
-        android:layout_height = "wrap_content">
+        android:layout_height = "130dp">
 
         <ImageView
             android:id = "@+id/mangaThumbImage"
@@ -39,5 +39,13 @@
                 android:layout_marginRight = "8dp"
                 android:textAlignment = "textStart" />
         </LinearLayout>
+
+        <Button
+            android:id = "@+id/itemButton"
+            android:layout_width = "match_parent"
+            android:layout_height = "595dp"
+            android:background = "@android:color/transparent">
+
+        </Button>
     </RelativeLayout>
 </androidx.cardview.widget.CardView>

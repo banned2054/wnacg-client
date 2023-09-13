@@ -3,49 +3,17 @@ package banned.android.wnacg.viewmodel
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.liveData
+import androidx.lifecycle.viewModelScope
 import banned.android.wnacg.data.models.Manga
 import banned.android.wnacg.data.repository.RetrofitClient
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jsoup.Jsoup
 import java.io.IOException
 
 
 class GalleryViewModel : ViewModel()
 {
-    private val searchQuery = MutableLiveData("無修正")
-    private val searchPage = MutableLiveData(1)
-    val galleryItems = liveData(Dispatchers.IO) {
-        val query = searchQuery.value ?: return@liveData
-        val page = searchPage.value ?: return@liveData
-        try
-        {
-            val response = RetrofitClient.pageApi.search(query, "", "yes", "_all", "create_time_DESC", page).execute()
-            if (response.isSuccessful)
-            {
-                val html = response.body()?.string() ?: ""
-                val items = parseHtml(html)
-                Log.i("GalleryViewModel", "get ${items.size} manga")
-                emit(items)
-            }
-            else
-            {
-                // 打印错误的 HTTP 状态码和消息
-                Log.e(
-                    "GalleryViewModel", "HTTP error, code = ${response.code()}, message = ${response.message()}"
-                     )
-                val items: List<Manga> = emptyList()
-                emit(items)
-            }
-        }
-        catch (e: IOException)
-        {
-            // 网络请求失败，打印错误信息
-            e.printStackTrace()
-
-        }
-    }
-
     private fun parseHtml(html: String): List<Manga>
     {
         val doc = Jsoup.parse(html)
@@ -69,6 +37,10 @@ class GalleryViewModel : ViewModel()
         return galleryItems
     }
 
+    private val nowPage = 1
+    private val searchQuery = MutableLiveData("無修正")
+    private val searchPage = MutableLiveData(1)
+    val galleryItems = MutableLiveData<List<Manga>>()
 
     fun search(query: String? = null, page: Int? = null)
     {
@@ -80,5 +52,31 @@ class GalleryViewModel : ViewModel()
         {
             searchPage.value = page
         }
+
+        val query = searchQuery.value ?: return
+        val page = searchPage.value ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            try
+            {
+                val response = RetrofitClient.pageApi.search(query, "", "yes", "_all", "create_time_DESC", page).execute()
+                if (response.isSuccessful)
+                {
+                    val html = response.body()?.string() ?: ""
+                    val items = parseHtml(html)
+                    Log.i("GalleryViewModel", "get ${items.size} manga")
+                    val currentItems = galleryItems.value ?: emptyList()
+                    galleryItems.postValue(currentItems + items)
+                }
+                else
+                {
+                    Log.e("GalleryViewModel", "HTTP error, code = ${response.code()}, message = ${response.message()}")
+                }
+            }
+            catch (e: IOException)
+            {
+                e.printStackTrace()
+            }
+        }
     }
+
 }
