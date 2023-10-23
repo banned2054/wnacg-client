@@ -14,7 +14,7 @@ import java.io.IOException
 
 class GalleryViewModel : ViewModel()
 {
-    private fun parseHtml(html: String): List<Manga>
+    private fun parseHtml(html : String) : List<Manga>
     {
         val doc = Jsoup.parse(html)
         val elements = doc.select("li.gallary_item")
@@ -23,10 +23,13 @@ class GalleryViewModel : ViewModel()
         for (element in elements)
         {
             val imgSrc = "https:" + element.select("div.pic_box > a > img").attr("src")
-            val title = element.select("div.info > div.title > a").attr("title").replace("<em>", "").replace("</em>", "")
-            val linkStr = element.select("div.info > div.title > a").attr("href").replace("photos-index-aid-", "").replace(".html", "")
+            val title = element.select("div.info > div.title > a").attr("title").replace("<em>", "")
+                .replace("</em>", "")
+            val linkStr = element.select("div.info > div.title > a").attr("href")
+                .replace("photos-index-aid-", "").replace(".html", "")
             val linkAid = linkStr.filter { it.isDigit() }.toInt()
-            val pictureCountStr = element.select("div.info > div.info_col").text().split("，")[0].replace("張圖片", "")
+            val pictureCountStr =
+                element.select("div.info > div.info_col").text().split("，")[0].replace("張圖片", "")
             val pictureCount = pictureCountStr.filter { it.isDigit() }.toInt()
             val thumbnailImagePath = ""
 
@@ -42,7 +45,7 @@ class GalleryViewModel : ViewModel()
     private val searchPage = MutableLiveData(1)
     val galleryItems = MutableLiveData<List<Manga>>()
 
-    fun search(query: String? = null, page: Int? = null)
+    fun search(query : String? = null, page : Int? = null)
     {
         if (query != null)
         {
@@ -58,7 +61,14 @@ class GalleryViewModel : ViewModel()
         viewModelScope.launch(Dispatchers.IO) {
             try
             {
-                val response = RetrofitClient.pageApi.search(query, "", "yes", "_all", "create_time_DESC", page).execute()
+                val response = RetrofitClient.pageApi.search(
+                        query,
+                        "",
+                        "yes",
+                        "_all",
+                        "create_time_DESC",
+                        page
+                                                            ).execute()
                 if (response.isSuccessful)
                 {
                     val html = response.body()?.string() ?: ""
@@ -69,10 +79,13 @@ class GalleryViewModel : ViewModel()
                 }
                 else
                 {
-                    Log.e("GalleryViewModel", "HTTP error, code = ${response.code()}, message = ${response.message()}")
+                    Log.e(
+                            "GalleryViewModel",
+                            "HTTP error, code = ${response.code()}, message = ${response.message()}"
+                         )
                 }
             }
-            catch (e: IOException)
+            catch (e : IOException)
             {
                 e.printStackTrace()
             }

@@ -14,114 +14,104 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
 import java.io.FileOutputStream
+import java.io.InputStream
 
 class ImageRepository(
-    private val context: Context, private val imageService: ApiService, private val imageDao: ImageDao
+        private val context : Context,
+        private val imageService : ApiService,
+        private val imageDao : ImageDao
                      )
 {
-    private fun downloadAndCacheImage(url: String, imageView: ImageView)
-    {
-        imageService.downloadImage(url).enqueue(object : Callback<ResponseBody>
-                                                {
-                                                    override fun onResponse(
-                                                        call: Call<ResponseBody>, response: Response<ResponseBody>
-                                                                           )
-                                                    {
-                                                        if (response.isSuccessful)
-                                                        {
-                                                            val inputStream = response.body()?.byteStream()
-                                                            val file = File(context.cacheDir, url.hashCode().toString())
-                                                            val outputStream = FileOutputStream(file)
-                                                            inputStream?.copyTo(outputStream)
-                                                            outputStream.close()
 
-                                                            // 更新数据库
-                                                            val imageEntity = ImageEntity(
-                                                                url, file.absolutePath, System.currentTimeMillis() + MAX_LIVE_TIME
-                                                                                         )
-
-                                                            CoroutineScope(Dispatchers.IO).launch {
-                                                                imageDao.insert(imageEntity)
-                                                            }
-                                                            // 更新ImageView
-                                                            val bitmap = BitmapFactory.decodeFile(file.absolutePath)
-                                                            imageView.setImageBitmap(bitmap)
-                                                        }
-                                                    }
-
-                                                    override fun onFailure(
-                                                        call: Call<ResponseBody>, t: Throwable
-                                                                          )
-                                                    {
-                                                        val a = 1
-                                                    }
-                                                })
-    }
-
-    fun getImage(url: String, imageView: ImageView)
+    fun getImage(url : String, imageView : ImageView)
     {
         CoroutineScope(Dispatchers.IO).launch {
             val imageEntity = imageDao.find(url)
-
-            //数据库中没有图片
-            if (imageEntity == null)
+            if (imageEntity == null || ! File(imageEntity.filePath).exists() || imageEntity.expiryTime <= System.currentTimeMillis())
             {
-                downloadAndCacheImage(url, imageView)
+                handleImageNotInCache(url, imageView, imageEntity)
                 return@launch
             }
-
-            val file = File(imageEntity.filePath)
-
-            //数据库中有图片，但实际没有图片
-            if (!file.exists())
-            {
-                downloadAndCacheImage(url, imageView)
-                return@launch
-            }
-
-            //超时，重新下载图片
-            if (imageEntity.expiryTime <= System.currentTimeMillis())
-            {
-                imageDao.delete(imageEntity)
-                downloadAndCacheImage(url, imageView)
-                return@launch
-            }
-
-            // 更新图片的有效期
-            val updatedImageEntity = imageEntity.copy(expiryTime = System.currentTimeMillis() + MAX_LIVE_TIME)
-            imageDao.update(updatedImageEntity)
-            try
-            {
-                // 更新ImageView
-                val bitmap = BitmapFactory.decodeFile(imageEntity.filePath)
-
-                //如果成功读取图片，设置imageView
-                if (bitmap != null)
-                {
-                    imageView.setImageBitmap(bitmap)
-                }
-
-                //图片文件存在，但不完整
-                else
-                {
-                    file.delete()
-
-                    imageDao.delete(updatedImageEntity)
-                    downloadAndCacheImage(url, imageView)
-                    return@launch
-                }
-            }
-            catch (e: Exception)
-            {
-                file.delete()
-
-                imageDao.delete(updatedImageEntity)
-                downloadAndCacheImage(url, imageView)
-            }
-
+            updateImageExpiryAndSetImageView(url, imageView, imageEntity)
         }
     }
 
+    private suspend fun handleImageNotInCache(
+            url : String,
+            imageView : ImageView,
+            imageEntity : ImageEntity?
+                                             )
+    {
+        imageEntity?.let { imageDao.delete(it) }
+        downloadAndCacheImage(url, imageView)
+    }
+
+    private suspend fun updateImageExpiryAndSetImageView(
+            url : String,
+            imageView : ImageView,
+            imageEntity : ImageEntity
+                                                        )
+    {
+        val updatedImageEntity =
+            imageEntity.copy(expiryTime = System.currentTimeMillis() + MAX_LIVE_TIME)
+        imageDao.update(updatedImageEntity)
+        val bitmap = try
+        {
+            BitmapFactory.decodeFile(imageEntity.filePath)
+        }
+        catch (e : Exception)
+        {
+            handleImageNotInCache(url, imageView, updatedImageEntity)
+            return
+        }
+        if (bitmap != null)
+        {
+            imageView.setImageBitmap(bitmap)
+        }
+        else
+        {
+            handleImageNotInCache(url, imageView, updatedImageEntity)
+        }
+    }
+
+    private inner class ImageDownloadCallback(
+            private val url : String,
+            private val imageView : ImageView
+                                             ) : Callback<ResponseBody>
+    {
+        override fun onResponse(call : Call<ResponseBody>, response : Response<ResponseBody>)
+        {
+            response.body()?.byteStream()?.let { inputStream ->
+                handleInputStream(inputStream, url, imageView)
+            }
+        }
+
+        override fun onFailure(call : Call<ResponseBody>, t : Throwable)
+        {
+            // Handle failure
+        }
+    }
+
+    private fun handleInputStream(inputStream : InputStream, url : String, imageView : ImageView)
+    {
+        val file = File(context.cacheDir, url.hashCode().toString())
+        FileOutputStream(file).apply {
+            inputStream.copyTo(this)
+            close()
+        }
+        val imageEntity =
+            ImageEntity(url, file.absolutePath, System.currentTimeMillis() + MAX_LIVE_TIME)
+        CoroutineScope(Dispatchers.IO).launch {
+            imageDao.insert(imageEntity)
+            val bitmap = BitmapFactory.decodeFile(file.absolutePath)
+            imageView.setImageBitmap(bitmap)
+        }
+    }
+
+    private fun downloadAndCacheImage(url : String, imageView : ImageView)
+    {
+        imageService.downloadImage(url).enqueue(ImageDownloadCallback(url, imageView))
+    }
 
     companion object
     {

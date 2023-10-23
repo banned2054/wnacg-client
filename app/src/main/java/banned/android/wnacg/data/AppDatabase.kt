@@ -7,5 +7,5 @@ import banned.android.wnacg.data.models.ImageEntity
 @Database(entities = [ImageEntity::class], version = 1, exportSchema = false)
 abstract class AppDatabase : RoomDatabase()
 {
-    abstract fun imageDao(): ImageDao
+    abstract fun imageDao() : ImageDao
 }

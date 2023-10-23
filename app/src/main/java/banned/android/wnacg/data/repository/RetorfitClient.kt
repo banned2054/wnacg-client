@@ -9,7 +9,7 @@ object RetrofitClient
         Retrofit.Builder().baseUrl("https://wnacg.com/").build()
     }
 
-    val pageApi: ApiService by lazy {
+    val pageApi : ApiService by lazy {
         pageRetrofit.create(ApiService::class.java)
     }
 

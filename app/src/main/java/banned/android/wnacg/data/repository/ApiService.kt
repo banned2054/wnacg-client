@@ -8,35 +8,35 @@ interface ApiService
 {
     @GET("search/index.php")
     fun search(
-        @Query("q")
-        query: String,
-        @Query("m")
-        m: String,
-        @Query("syn")
-        syn: String,
-        @Query("f")
-        f: String,
-        @Query("s")
-        s: String,
-        @Query("p")
-        p: Int
-              ): Call<ResponseBody>
+            @Query("q")
+            query : String,
+            @Query("m")
+            m : String,
+            @Query("syn")
+            syn : String,
+            @Query("f")
+            f : String,
+            @Query("s")
+            s : String,
+            @Query("p")
+            p : Int
+              ) : Call<ResponseBody>
 
     @GET("photos-index-aid-{aid}.html")
     fun getPhotosIndex(
-        @Path("aid")
-        aid: Int
-                      ): Call<ResponseBody>
+            @Path("aid")
+            aid : Int
+                      ) : Call<ResponseBody>
 
     @GET("photos-view-id-{id}.html")
     fun getPhotosView(
-        @Path("id")
-        id: Int
-                     ): Call<ResponseBody>
+            @Path("id")
+            id : Int
+                     ) : Call<ResponseBody>
 
     @GET
     fun downloadImage(
-        @Url
-        imageUrl: String
-                     ): Call<ResponseBody>
+            @Url
+            imageUrl : String
+                     ) : Call<ResponseBody>
 }

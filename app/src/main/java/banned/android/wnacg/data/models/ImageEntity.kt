@@ -6,8 +6,8 @@ import androidx.room.PrimaryKey
 
 @Entity
 data class ImageEntity(
-    @PrimaryKey
-    val url: String,
-    val filePath: String,
-    val expiryTime: Long
+        @PrimaryKey
+        val url : String,
+        val filePath : String,
+        val expiryTime : Long
                       )

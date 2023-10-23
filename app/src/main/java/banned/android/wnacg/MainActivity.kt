@@ -17,9 +17,9 @@ import retrofit2.Retrofit
 class MainActivity : AppCompatActivity()
 {
 
-    private lateinit var viewModel: GalleryViewModel
-    private lateinit var mangaAdapter: MangaAdapter
-    override fun onCreate(savedInstanceState: Bundle?)
+    private lateinit var viewModel : GalleryViewModel
+    private lateinit var mangaAdapter : MangaAdapter
+    override fun onCreate(savedInstanceState : Bundle?)
     {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -28,10 +28,11 @@ class MainActivity : AppCompatActivity()
 
         viewModel = ViewModelProvider(this)[GalleryViewModel::class.java]
         val db = Room.databaseBuilder(
-            applicationContext, AppDatabase::class.java, "database-name"
+                applicationContext, AppDatabase::class.java, "database-name"
                                      ).build()
         val imageDao = db.imageDao()
-        val retrofit = Retrofit.Builder().baseUrl("https://localhost/").build() // 使用一个占位符作为 base URL.build()
+        val retrofit =
+            Retrofit.Builder().baseUrl("https://localhost/").build() // 使用一个占位符作为 base URL.build()
 
         val imageService = retrofit.create(ApiService::class.java)
         val imageRepository = ImageRepository(this, imageService, imageDao)
